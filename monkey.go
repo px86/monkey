@@ -18,12 +18,13 @@ func main() {
 	}
 	start := time.Now()
 
-	lexer, err := lexer.New(os.Args[1])
+	lexer, err := lexer.FromFilePath(os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 	for tok := lexer.NextToken(); tok.Type != token.EOF; tok = lexer.NextToken() {
-		fmt.Println(tok)
+		token.PrintToken(tok)
 	}
+
 	fmt.Printf("\ntook %v\n", time.Since(start))
 }

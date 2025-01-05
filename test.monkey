@@ -11,4 +11,4 @@ let main = fn() {
   if 10 > 6 {
     bar("Hello World!");
   }
-}
+};

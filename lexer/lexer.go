@@ -1,19 +1,27 @@
 package lexer
 
 import (
-	token "github.com/px86/monkey/token"
+	"github.com/px86/monkey/token"
 	"io"
 	"os"
 )
 
 type Lexer struct {
-	source string
-	pos    int
-	line   int
-	column int
+	source     string
+	pos        int
+	line       int
+	column     int
+	lastColumn int
 }
 
-func New(path string) (*Lexer, error) {
+func New(source string) *Lexer {
+	return &Lexer{
+		source: source,
+		line:   1,
+	}
+}
+
+func FromFilePath(path string) (*Lexer, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -28,23 +36,35 @@ func New(path string) (*Lexer, error) {
 	}, nil
 }
 
-func (lex *Lexer) peek() byte {
+// return next character (byte) in the source code
+func (lex *Lexer) next() byte {
 	if lex.pos >= len(lex.source) {
 		return 0
 	}
-	return lex.source[lex.pos]
-}
-
-func (lex *Lexer) consume() byte {
 	b := lex.source[lex.pos]
 	lex.pos++
 	if b == '\n' {
 		lex.line++
+		lex.lastColumn = lex.column
 		lex.column = 0
 	} else {
 		lex.column++
 	}
 	return b
+}
+
+// move the input pointer one character (byte) backwards
+func (lex *Lexer) retract() {
+	if lex.pos > 0 {
+		lex.pos--
+	}
+	b := lex.source[lex.pos]
+	if b == '\n' {
+		lex.line--
+		lex.column = lex.lastColumn
+	} else {
+		lex.column--
+	}
 }
 
 func isWhitespace(c byte) bool {
@@ -81,138 +101,166 @@ func isDigit(c byte) bool {
 	return false
 }
 
-func (lex *Lexer) NextToken() token.Token {
-	var tok token.Token
+func isAlphaNumeric(c byte) bool {
+	if 'a' <= c && c <= 'z' {
+		return true
+	}
+	if 'A' <= c && c <= 'Z' {
+		return true
+	}
+	return isDigit(c)
+}
 
+func (lex *Lexer) NextToken() token.Token {
+
+	tok := token.Token{Line: lex.line, Column: lex.column}
+
+	// this loop should break after each complete iteration (unless you call 'continue')
+	// ensure there is a break statement at the bottom
 	for {
-		if lex.pos >= len(lex.source) {
-			tok := token.Token{Type: token.EOF, Value: "", Line: lex.line, Column: lex.column}
-			lex.pos = -1
-			return tok
+		ch := lex.next()
+		if ch == 0 {
+			tok.Type = token.EOF
 		}
-		if lex.pos == -1 {
-			panic("don't bother the lexer anymore...")
-		}
-		ch := lex.source[lex.pos]
 		switch {
 		case isWhitespace(ch):
-			lex.consume()
 			continue
-		case ch == '/':
-			tok = token.Token{Type: token.SLASH, Value: token.SLASH, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
 		case ch == '*':
-			tok = token.Token{Type: token.ASTERISK_SIGN, Value: token.ASTERISK_SIGN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == '!':
-			tok = token.Token{Type: token.BANG_SIGN, Value: token.BANG_SIGN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == '>':
-			tok = token.Token{Type: token.GREATER_THAN, Value: token.GREATER_THAN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == '<':
-			tok = token.Token{Type: token.LESS_THAN, Value: token.LESS_THAN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
+			tok.Type = token.ASTERISK
 		case ch == ',':
-			tok = token.Token{Type: token.COMMA, Value: token.COMMA, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == ';':
-			tok = token.Token{Type: token.SEMI_COLON, Value: token.SEMI_COLON, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == '(':
-			tok = token.Token{Type: token.LEFT_PAREN, Value: token.LEFT_PAREN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == ')':
-			tok = token.Token{Type: token.RIGHT_PAREN, Value: token.RIGHT_PAREN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == '{':
-			tok = token.Token{Type: token.LEFT_BRACE, Value: token.LEFT_BRACE, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == '}':
-			tok = token.Token{Type: token.RIGHT_BRACE, Value: token.RIGHT_BRACE, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-		case ch == '+':
-			tok = token.Token{Type: token.PLUS_SIGN, Value: token.PLUS_SIGN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
+			tok.Type = token.COMMA
 		case ch == '-':
-			tok = token.Token{Type: token.MINUS_SIGN, Value: token.MINUS_SIGN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
+			tok.Type = token.MINUS
+		case ch == '+':
+			tok.Type = token.PLUS
+		case ch == ';':
+			tok.Type = token.SEMI_COLON
+		case ch == '/':
+			tok.Type = token.SLASH
+		case ch == '(':
+			tok.Type = token.LEFT_PAREN
+		case ch == ')':
+			tok.Type = token.RIGHT_PAREN
+		case ch == '{':
+			tok.Type = token.LEFT_BRACE
+		case ch == '}':
+			tok.Type = token.RIGHT_BRACE
+		case ch == '[':
+			tok.Type = token.LEFT_BRACKET
+		case ch == ']':
+			tok.Type = token.RIGHT_BRACKET
+		case ch == '^':
+			tok.Type = token.XOR
 		case ch == '=':
-			tok = token.Token{Type: token.EQUAL_SIGN, Value: token.EQUAL_SIGN, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
-
+			if lex.next() == '=' {
+				tok.Type = token.EQUAL_EQUAL
+			} else {
+				lex.retract()
+				tok.Type = token.EQUAL
+			}
+		case ch == '!':
+			if lex.next() == '=' {
+				tok.Type = token.NOT_EQUAL
+			} else {
+				lex.retract()
+				tok.Type = token.EXCLAMATION
+			}
+		case ch == '>':
+			if lex.next() == '=' {
+				tok.Type = token.GREATER_THAN_EQUAL
+			} else {
+				lex.retract()
+				tok.Type = token.GREATER_THAN
+			}
+		case ch == '<':
+			if lex.next() == '=' {
+				tok.Type = token.LESS_THAN_EQUAL
+			} else {
+				lex.retract()
+				tok.Type = token.LESS_THAN
+			}
+		case ch == '&':
+			if lex.next() == '&' {
+				tok.Type = token.LOGICAL_AND
+			} else {
+				lex.retract()
+				tok.Type = token.BITWISE_AND
+			}
+		case ch == '|':
+			if lex.next() == '|' {
+				tok.Type = token.LOGICAL_OR
+			} else {
+				lex.retract()
+				tok.Type = token.BITWISE_OR
+			}
+		// string literal
 		case ch == '"':
-			start := lex.pos
-			line := lex.line
-			column := lex.column
-			lex.consume() // cosume the " character
-			for lex.peek() != 0 {
-				c := lex.consume()
-				if c == '"' {
-					stringLiteral := lex.source[start+1 : lex.pos-1]
-					tok = token.Token{Type: token.STRING_LITERAL, Value: stringLiteral, Line: line, Column: column}
-					return tok
+			chars := []byte{}
+		STRING:
+			for c := lex.next(); c != 0; c = lex.next() {
+				switch c {
+				case 0:
+					tok.Type = token.UNKNOWN
+					break STRING
+				case '"':
+					break STRING
+				case '\\':
+					switch lex.next() {
+					case 'a':
+						chars = append(chars, '\a')
+					case 'n':
+						chars = append(chars, '\n')
+					case 't':
+						chars = append(chars, '\t')
+					case 'r':
+						chars = append(chars, '\r')
+					case 'v':
+						chars = append(chars, '\v')
+					case 'f':
+						chars = append(chars, '\f')
+					case '\\':
+						chars = append(chars, '\\')
+					case '"':
+						chars = append(chars, '"')
+					default:
+						tok.Type = token.UNKNOWN
+						break STRING
+					}
+				default:
+					chars = append(chars, c)
 				}
 			}
-			val := lex.source[start-1:] // unterminated string literal
-			tok = token.Token{Type: token.ILLEGAL, Value: val, Line: line, Column: column}
-			return tok
-
-		case isAlpha(ch):
-			start := lex.pos
-			column := lex.column
-			for isAlpha(lex.peek()) || lex.peek() == '_' {
-				lex.consume()
+			if tok.Type != token.UNKNOWN {
+				tok.Type = token.STRING
+				tok.Value = string(chars)
 			}
-			val := lex.source[start:lex.pos]
-			switch val {
-			case token.LET:
-				tok = token.Token{Type: token.LET, Value: val, Line: lex.line, Column: column}
-			case token.FUNCTION:
-				tok = token.Token{Type: token.FUNCTION, Value: val, Line: lex.line, Column: column}
-			case token.TRUE:
-				tok = token.Token{Type: token.TRUE, Value: val, Line: lex.line, Column: column}
-			case token.FALSE:
-				tok = token.Token{Type: token.FALSE, Value: val, Line: lex.line, Column: column}
-			case token.IF:
-				tok = token.Token{Type: token.IF, Value: val, Line: lex.line, Column: column}
-			case token.ELSE:
-				tok = token.Token{Type: token.ELSE, Value: val, Line: lex.line, Column: column}
-			case token.RETURN:
-				tok = token.Token{Type: token.RETURN, Value: val, Line: lex.line, Column: column}
-			default:
-				tok = token.Token{Type: token.IDENTIFIER, Value: val, Line: lex.line, Column: column}
-			}
-			return tok
-
+		// number
 		case isDigit(ch):
-			column := lex.column
-			var value int
-			for isDigit(lex.peek()) {
-				value = value*10 + int(lex.consume()) - int('0')
+			// TODO: check floating point numbers
+			value := int(ch) - int('0')
+			for d := lex.next(); isDigit(d); d = lex.next() {
+				value = value*10 + int(d) - int('0')
 			}
-			tok = token.Token{Type: token.INTEGER, Value: value, Line: lex.line, Column: column}
-			return tok
-
-		default:
-			tok = token.Token{Type: token.ILLEGAL, Value: token.ILLEGAL, Line: lex.line, Column: lex.column}
-			lex.consume()
-			return tok
+			lex.retract()
+			tok.Type = token.INTEGER
+			tok.Value = value
+		// identifier or keyword
+		case isAlpha(ch):
+			chars := []byte{ch}
+			for c := lex.next(); isAlphaNumeric(c) || c == '_'; c = lex.next() {
+				chars = append(chars, c)
+			}
+			lex.retract()
+			value := string(chars)
+			tok.Value = value
+			if token.KeywordsMap[value] != 0 {
+				tok.Type = token.KeywordsMap[value]
+			} else {
+				tok.Type = token.IDENTIFIER
+			}
 		}
+		break // break the infinite for loop
 	}
 
+	return tok
 }
