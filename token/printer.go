@@ -2,88 +2,95 @@ package token
 
 import "fmt"
 
+// Return a string representing the token.
+func String(tok Token) string {
+	tokTypeStr := TypeStr(tok.Type)
+	return fmt.Sprintf("{Type:'%v', Value:'%v', Line:'%d', Column:'%d'}", tokTypeStr, tok.Value, tok.Line, tok.Column)
+}
+
+// Print the string representation of token. Suited for debugging purpose.
 func PrintToken(tok Token) {
+	fmt.Println(String(tok))
+}
 
-	var tokTypeStr string
-
-	switch tok.Type {
+// Return TokenType as string. Useful for error reporting.
+func TypeStr(toktype TokenType) string {
+	switch toktype {
 
 	case UNKNOWN:
-		tokTypeStr = "UNKNOWN"
+		return "UNKNOWN"
 	case EOF:
-		tokTypeStr = "EOF"
+		return "EOF"
 	case ASTERISK:
-		tokTypeStr = "ASTERISK"
+		return "ASTERISK"
 	case COMMA:
-		tokTypeStr = "COMMA"
+		return "COMMA"
 	case MINUS:
-		tokTypeStr = "MINUS"
+		return "MINUS"
 	case PLUS:
-		tokTypeStr = "PLUS"
+		return "PLUS"
 	case SEMI_COLON:
-		tokTypeStr = "SEMI_COLON"
+		return "SEMI_COLON"
 	case SLASH:
-		tokTypeStr = "SLASH"
+		return "SLASH"
 	case LEFT_PAREN:
-		tokTypeStr = "LEFT_PAREN"
+		return "LEFT_PAREN"
 	case RIGHT_PAREN:
-		tokTypeStr = "RIGHT_PAREN"
+		return "RIGHT_PAREN"
 	case LEFT_BRACE:
-		tokTypeStr = "LEFT_BRACE"
+		return "LEFT_BRACE"
 	case RIGHT_BRACE:
-		tokTypeStr = "RIGHT_BRACE"
+		return "RIGHT_BRACE"
 	case LEFT_BRACKET:
-		tokTypeStr = "LEFT_BRACKET"
+		return "LEFT_BRACKET"
 	case RIGHT_BRACKET:
-		tokTypeStr = "RIGHT_BRACKET"
+		return "RIGHT_BRACKET"
 	case EQUAL:
-		tokTypeStr = "EQUAL"
+		return "EQUAL"
 	case EQUAL_EQUAL:
-		tokTypeStr = "EQUAL_EQUAL"
+		return "EQUAL_EQUAL"
 	case EXCLAMATION:
-		tokTypeStr = "EXCLAMATION"
+		return "EXCLAMATION"
 	case NOT_EQUAL:
-		tokTypeStr = "NOT_EQUAL"
+		return "NOT_EQUAL"
 	case GREATER_THAN:
-		tokTypeStr = "GREATER_THAN"
+		return "GREATER_THAN"
 	case GREATER_THAN_EQUAL:
-		tokTypeStr = "GREATER_THAN_EQUAL"
+		return "GREATER_THAN_EQUAL"
 	case LESS_THAN:
-		tokTypeStr = "LESS_THAN"
+		return "LESS_THAN"
 	case LESS_THAN_EQUAL:
-		tokTypeStr = "LESS_THAN_EQUAL"
+		return "LESS_THAN_EQUAL"
 	case BITWISE_AND:
-		tokTypeStr = "BITWISE_AND"
+		return "BITWISE_AND"
 	case LOGICAL_AND:
-		tokTypeStr = "LOGICAL_AND"
+		return "LOGICAL_AND"
 	case BITWISE_OR:
-		tokTypeStr = "BITWISE_OR"
+		return "BITWISE_OR"
 	case LOGICAL_OR:
-		tokTypeStr = "LOGICAL_OR"
+		return "LOGICAL_OR"
 	case XOR:
-		tokTypeStr = "XOR"
+		return "XOR"
 	case INTEGER:
-		tokTypeStr = "INTEGER"
+		return "INTEGER"
 	case FLOAT:
-		tokTypeStr = "FLOAT"
+		return "FLOAT"
 	case STRING:
-		tokTypeStr = "STRING"
+		return "STRING"
 	case IDENTIFIER:
-		tokTypeStr = "IDENTIFIER"
+		return "IDENTIFIER"
 	case LET:
-		tokTypeStr = "LET"
+		return "LET"
 	case IF:
-		tokTypeStr = "IF"
+		return "IF"
 	case ELSE:
-		tokTypeStr = "ELSE"
+		return "ELSE"
 	case FUNCTION:
-		tokTypeStr = "FUNCTION"
+		return "FUNCTION"
 	case RETURN:
-		tokTypeStr = "RETURN"
+		return "RETURN"
 
 	default:
-		tokTypeStr = "Oopsie...don't know about this type!"
+		return ""
 	}
-
-	fmt.Printf("{Type:%v, Value:%v, Line:%d, Column:%d}\n", tokTypeStr, tok.Value, tok.Line, tok.Column)
 }

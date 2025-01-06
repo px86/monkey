@@ -11,7 +11,7 @@ type Lexer struct {
 	pos        int
 	line       int
 	column     int
-	lastColumn int
+	lastColumn int // to restore 'column' when a byte is retracted
 }
 
 func New(source string) *Lexer {
@@ -65,50 +65,6 @@ func (lex *Lexer) retract() {
 	} else {
 		lex.column--
 	}
-}
-
-func isWhitespace(c byte) bool {
-	switch c {
-	case ' ':
-		return true
-	case '\t':
-		return true
-	case '\n':
-		return true
-	case '\v':
-		return true
-	case '\r':
-		return true
-	default:
-		return false
-	}
-}
-
-func isAlpha(c byte) bool {
-	if 'a' <= c && c <= 'z' {
-		return true
-	}
-	if 'A' <= c && c <= 'Z' {
-		return true
-	}
-	return false
-}
-
-func isDigit(c byte) bool {
-	if '0' <= c && c <= '9' {
-		return true
-	}
-	return false
-}
-
-func isAlphaNumeric(c byte) bool {
-	if 'a' <= c && c <= 'z' {
-		return true
-	}
-	if 'A' <= c && c <= 'Z' {
-		return true
-	}
-	return isDigit(c)
 }
 
 func (lex *Lexer) NextToken() token.Token {
@@ -263,4 +219,48 @@ func (lex *Lexer) NextToken() token.Token {
 	}
 
 	return tok
+}
+
+func isWhitespace(c byte) bool {
+	switch c {
+	case ' ':
+		return true
+	case '\t':
+		return true
+	case '\n':
+		return true
+	case '\v':
+		return true
+	case '\r':
+		return true
+	default:
+		return false
+	}
+}
+
+func isAlpha(c byte) bool {
+	if 'a' <= c && c <= 'z' {
+		return true
+	}
+	if 'A' <= c && c <= 'Z' {
+		return true
+	}
+	return false
+}
+
+func isDigit(c byte) bool {
+	if '0' <= c && c <= '9' {
+		return true
+	}
+	return false
+}
+
+func isAlphaNumeric(c byte) bool {
+	if 'a' <= c && c <= 'z' {
+		return true
+	}
+	if 'A' <= c && c <= 'Z' {
+		return true
+	}
+	return isDigit(c)
 }
