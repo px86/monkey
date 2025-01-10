@@ -203,7 +203,7 @@ func (p *Parser) parseFunctionCall() *ast.FunctionCall {
 	var fcall *ast.FunctionCall
 	if p.expectPeek(token.LEFT_PAREN) {
 		p.nextToken() // moves past (
-		fcall = &ast.FunctionCall{Identifier: ident}
+		fcall = &ast.FunctionCall{Name: ident}
 		for !p.curTokenIs(token.RIGHT_PAREN) {
 			fcall.Args = append(fcall.Args, p.parseExpression(PREC_LOWEST))
 			if p.curTokenIs(token.COMMA) {

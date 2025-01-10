@@ -34,8 +34,8 @@ func TestReturnStatements(t *testing.T) {
 	if !ok {
 		t.Fatalf("stmt.ReturnValue not *ast.FunctionCall. got=%T", stmt.ReturnValue)
 	}
-	if fcall.Identifier.Value != "foo" {
-		t.Fatalf("function name not %q. got=%q", "foo", fcall.Identifier.Value)
+	if fcall.Name.Value != "foo" {
+		t.Fatalf("function name not %q. got=%q", "foo", fcall.Name.Value)
 	}
 }
 
@@ -46,7 +46,7 @@ func TestLetStatements(t *testing.T) {
 
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
-
+	t.Errorf("%s", program.String())
 	if len(program.Statements) != 1 {
 		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
 	}
@@ -120,8 +120,8 @@ func TestIntegerExpression(t *testing.T) {
 		t.Fatalf("be.Left is nil")
 	}
 
-	if be.String() != "10 PLUS 30" {
-		t.Fatalf("String() not %q. got=%v", "10 PLUS 30", be.String())
+	if be.String() != "(PLUS 10 30)" {
+		t.Fatalf("String() not %q. got=%v", "(PLUS 10 30)", be.String())
 	}
 }
 
@@ -207,8 +207,8 @@ func TestFunctionCall(t *testing.T) {
 			t.Fatalf("[%d] exp not *ast.Functioncall. got=%T", i, expStmt.Expression)
 		}
 
-		if fc.Identifier.Value != tt.FunctionName {
-			t.Fatalf("[%d] function name not %q. got=%q", i, tt.FunctionName, fc.Identifier.Value)
+		if fc.Name.Value != tt.FunctionName {
+			t.Fatalf("[%d] function name not %q. got=%q", i, tt.FunctionName, fc.Name.Value)
 		}
 
 		if len(fc.Args) != len(tt.Args) {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/px86/monkey/token"
-	"os"
 	"strconv"
 )
 
@@ -28,10 +27,11 @@ type Program struct {
 
 func (p *Program) String() string {
 	var out bytes.Buffer
-
+	out.WriteString("(prog ")
 	for _, s := range p.Statements {
 		out.WriteString(s.String())
 	}
+	out.WriteString(")")
 	return out.String()
 }
 
@@ -86,7 +86,7 @@ type InfixExpr struct {
 }
 
 func (be *InfixExpr) String() string {
-	return be.Left.String() + " " + token.TypeStr(be.Operator.Type) + " " + be.Right.String()
+	return fmt.Sprintf("(%s %s %s)", token.TypeStr(be.Operator.Type), be.Left.String(), be.Right.String())
 }
 func (be *InfixExpr) expressionNode() {}
 
@@ -99,22 +99,8 @@ type LetStatement struct {
 func (ls *LetStatement) statementNode() {}
 
 func (ls *LetStatement) String() string {
-	var out bytes.Buffer
-
-	tokstr, ok := ls.Token.Value.(string) // "let"
-	if !ok {
-		fmt.Fprintf(os.Stderr, "expected %q, got=%v", "let", ls.Token.Value)
-	}
-
-	out.WriteString(tokstr + " ")
-	out.WriteString(ls.Name.String())
-	out.WriteString(" = ")
-
-	if ls.Value != nil {
-		out.WriteString(ls.Value.String())
-	}
-	out.WriteString(";")
-	return out.String()
+	kwlet, _ := ls.Token.Value.(string) // "let"
+	return fmt.Sprintf("(%s %s %s)", kwlet, ls.Name.String(), ls.Value.String())
 }
 
 type Identifier struct {
@@ -130,18 +116,21 @@ func (i *Identifier) String() string {
 }
 
 type FunctionCall struct {
-	Identifier *Identifier
-	Args       []Expression
+	Name *Identifier
+	Args []Expression
 }
 
 func (fc *FunctionCall) expressionNode() {}
 
 func (fc *FunctionCall) String() string {
 	var buff bytes.Buffer
-	buff.WriteString(fc.Identifier.String() + "(")
+	buff.WriteString("(")
+	buff.WriteString(fc.Name.String())
 	for _, arg := range fc.Args {
+		buff.WriteString(" ")
 		buff.WriteString(arg.String())
 	}
+	buff.WriteString(")")
 	return buff.String()
 }
 
@@ -153,14 +142,6 @@ type ReturnStatement struct {
 func (rs *ReturnStatement) statementNode() {}
 
 func (rs *ReturnStatement) String() string {
-	var out bytes.Buffer
-
-	tokstr, _ := rs.Token.Value.(string) // "return"
-	out.WriteString(tokstr + " ")
-
-	if rs.ReturnValue != nil {
-		out.WriteString(rs.ReturnValue.String())
-	}
-	out.WriteString(";")
-	return out.String()
+	rtrn, _ := rs.Token.Value.(string) // "return"
+	return fmt.Sprintf("(%s %s)", rtrn, rs.ReturnValue.String())
 }
