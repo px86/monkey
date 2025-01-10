@@ -116,8 +116,6 @@ func (p *Parser) parseStatement() ast.Statement {
 func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.curToken}
 	if !p.expectPeek(token.IDENTIFIER) {
-		p.Errors = append(p.Errors,
-			errors.New(fmt.Sprintf("expected IDENTIFIER, got=%v", token.TypeStr(p.peekToken.Type))))
 		return nil
 	}
 	ident, ok := p.curToken.Value.(string)
@@ -128,12 +126,14 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: ident}
 
 	if !p.expectPeek(token.EQUAL) {
-		p.Errors = append(p.Errors,
-			errors.New(fmt.Sprintf("expected EQUAL, got=%v", token.TypeStr(p.peekToken.Type))))
 		return nil
 	}
-	for !p.curTokenIs(token.SEMI_COLON) {
-		p.nextToken()
+
+	p.nextToken()
+	stmt.Value = p.parseExpression(PREC_LOWEST)
+
+	if !p.expectCurToken(token.SEMI_COLON) {
+		return nil
 	}
 
 	return stmt
@@ -281,11 +281,32 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 
 // Match the expected token with peekToken.
 // If matched, call p.nextToken().
+// Else, report an error and return false.
 func (p *Parser) expectPeek(t token.TokenType) bool {
-	if p.peekTokenIs(t) {
+	if p.peekToken.Type == t {
 		p.nextToken()
 		return true
 	} else {
+		p.Errors = append(p.Errors,
+			errors.New(fmt.Sprintf("at line:%d, column:%d, expected %s, got=%s",
+				p.peekToken.Line, p.peekToken.Column,
+				token.TypeStr(t), token.TypeStr(p.peekToken.Type))))
+		return false
+	}
+}
+
+// Match the expected token with curToken.
+// If matched, call p.nextToken().
+// Else, report an error and return false.
+func (p *Parser) expectCurToken(t token.TokenType) bool {
+	if p.curToken.Type == t {
+		p.nextToken()
+		return true
+	} else {
+		p.Errors = append(p.Errors,
+			errors.New(fmt.Sprintf("at line:%d, column:%d, expected %s, got=%s",
+				p.peekToken.Line, p.peekToken.Column,
+				token.TypeStr(t), token.TypeStr(p.peekToken.Type))))
 		return false
 	}
 }
