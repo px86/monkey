@@ -75,7 +75,7 @@ type PrefixExpr struct {
 }
 
 func (pe *PrefixExpr) String() string {
-	return token.TypeStr(pe.Operator.Type) + pe.Expression.String()
+	return token.AsString(pe.Operator.Type) + pe.Expression.String()
 }
 func (pe *PrefixExpr) expressionNode() {}
 
@@ -86,7 +86,7 @@ type InfixExpr struct {
 }
 
 func (be *InfixExpr) String() string {
-	return fmt.Sprintf("(%s %s %s)", token.TypeStr(be.Operator.Type), be.Left.String(), be.Right.String())
+	return fmt.Sprintf("(%s %s %s)", token.AsString(be.Operator.Type), be.Left.String(), be.Right.String())
 }
 func (be *InfixExpr) expressionNode() {}
 
@@ -98,7 +98,7 @@ type FunctionExpr struct {
 
 func (fe *FunctionExpr) String() string {
 	var buff bytes.Buffer
-	buff.WriteString("(" + token.TypeStr(fe.Token.Type) + " (")
+	buff.WriteString("(" + token.AsString(fe.Token.Type) + " (")
 	for i, arg := range fe.Args {
 		buff.WriteString(arg.Value)
 		if i != len(fe.Args)-1 {

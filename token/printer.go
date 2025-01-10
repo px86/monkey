@@ -4,7 +4,7 @@ import "fmt"
 
 // Return a string representing the token.
 func String(tok Token) string {
-	tokTypeStr := TypeStr(tok.Type)
+	tokTypeStr := AsString(tok.Type)
 	return fmt.Sprintf("{Type:'%v', Value:'%v', Line:'%d', Column:'%d'}", tokTypeStr, tok.Value, tok.Line, tok.Column)
 }
 
@@ -13,8 +13,89 @@ func PrintToken(tok Token) {
 	fmt.Println(String(tok))
 }
 
+func AsString(toktype TokenType) string {
+	switch toktype {
+
+	case UNKNOWN:
+		return "UNKNOWN"
+	case EOF:
+		return "EOF"
+	case ASTERISK:
+		return "*"
+	case COMMA:
+		return ","
+	case MINUS:
+		return "-"
+	case PLUS:
+		return "+"
+	case SEMI_COLON:
+		return ";"
+	case SLASH:
+		return "/"
+	case LEFT_PAREN:
+		return "("
+	case RIGHT_PAREN:
+		return ")"
+	case LEFT_BRACE:
+		return "{"
+	case RIGHT_BRACE:
+		return "}"
+	case LEFT_BRACKET:
+		return "["
+	case RIGHT_BRACKET:
+		return "]"
+	case EQUAL:
+		return "="
+	case EQUAL_EQUAL:
+		return "=="
+	case EXCLAMATION:
+		return "!"
+	case EXCLAMATION_EQUAL:
+		return "!="
+	case GREATER_THAN:
+		return ">"
+	case GREATER_THAN_EQUAL:
+		return ">="
+	case LESSER_THAN:
+		return "<"
+	case LESSER_THAN_EQUAL:
+		return "<="
+	case AMPERSAND:
+		return "&"
+	case AMPERSAND_AMPERSAND:
+		return "&&"
+	case PIPE:
+		return "|"
+	case PIPE_PIPE:
+		return "||"
+	case CARET:
+		return "^"
+	case INTEGER:
+		return "INTEGER"
+	case FLOAT:
+		return "FLOAT"
+	case STRING_LITERAL:
+		return "STRING"
+	case IDENTIFIER:
+		return "IDENTIFIER"
+	case KW_LET:
+		return "let"
+	case KW_IF:
+		return "if"
+	case KW_ELSE:
+		return "else"
+	case KW_FUNCTION:
+		return "fn"
+	case KW_RETURN:
+		return "return"
+
+	default:
+		return ""
+	}
+}
+
 // Return TokenType as string. Useful for error reporting.
-func TypeStr(toktype TokenType) string {
+func TypeStr2(toktype TokenType) string {
 	switch toktype {
 
 	case UNKNOWN:

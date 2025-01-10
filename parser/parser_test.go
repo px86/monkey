@@ -120,8 +120,8 @@ func TestIntegerExpression(t *testing.T) {
 		t.Fatalf("be.Left is nil")
 	}
 
-	if be.String() != "(PLUS 10 30)" {
-		t.Fatalf("String() not %q. got=%v", "(PLUS 10 30)", be.String())
+	if be.String() != "(+ 10 30)" {
+		t.Fatalf("String() not %q. got=%v", "(+ 10 30)", be.String())
 	}
 }
 
@@ -158,7 +158,7 @@ func TestBinaryExpression(t *testing.T) {
 	}
 
 	if be.Operator.Type != token.PLUS {
-		t.Fatalf("top operator not PLUS. got=%v\n.String()=%q", token.TypeStr(be.Operator.Type), be.String())
+		t.Fatalf("top operator not PLUS. got=%v\n.String()=%q", token.AsString(be.Operator.Type), be.String())
 	}
 
 }

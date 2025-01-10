@@ -137,7 +137,7 @@ func (p *Parser) parseIntegerLiteral() *ast.IntegerLiteral {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, %s value not of type %s. got=%T",
 				p.curToken.Line, p.curToken.Column,
-				token.TypeStr(p.curToken.Type), "int", p.curToken.Value)))
+				token.AsString(p.curToken.Type), "int", p.curToken.Value)))
 		return nil
 	}
 	integer := &ast.IntegerLiteral{Token: p.curToken, Value: value}
@@ -151,7 +151,7 @@ func (p *Parser) parseStringLiteral() *ast.StringLiteral {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, %s value not of type %s. got=%T",
 				p.curToken.Line, p.curToken.Column,
-				token.TypeStr(p.curToken.Type), "string", p.curToken.Value)))
+				token.AsString(p.curToken.Type), "string", p.curToken.Value)))
 		return nil
 	}
 	s := &ast.StringLiteral{Token: p.curToken, Value: value}
@@ -165,7 +165,7 @@ func (p *Parser) parseIdentifier() *ast.Identifier {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, %s value not of type %s. got=%T",
 				p.curToken.Line, p.curToken.Column,
-				token.TypeStr(p.curToken.Type), "string", p.curToken.Value)))
+				token.AsString(p.curToken.Type), "string", p.curToken.Value)))
 		return nil
 	}
 	identifier := &ast.Identifier{Token: p.curToken, Value: id}
@@ -319,7 +319,7 @@ func (p *Parser) expectNextThenAdvance(t token.TokenType) bool {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, expected %s, got=%s",
 				p.nextToken.Line, p.nextToken.Column,
-				token.TypeStr(t), token.TypeStr(p.nextToken.Type))))
+				token.AsString(t), token.AsString(p.nextToken.Type))))
 		return false
 	}
 }
@@ -332,7 +332,7 @@ func (p *Parser) expectCurrentThenAdvance(t token.TokenType) bool {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, expected %s, got=%s",
 				p.nextToken.Line, p.nextToken.Column,
-				token.TypeStr(t), token.TypeStr(p.nextToken.Type))))
+				token.AsString(t), token.AsString(p.nextToken.Type))))
 		return false
 	}
 }
