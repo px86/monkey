@@ -65,7 +65,7 @@ type StringLiteral struct {
 }
 
 func (s *StringLiteral) String() string {
-	return s.Value
+	return fmt.Sprintf("%q", s.Value)
 }
 func (s *StringLiteral) expressionNode() {}
 
