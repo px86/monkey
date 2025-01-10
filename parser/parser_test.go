@@ -10,36 +10,32 @@ import (
 
 func checkParserErrors(t *testing.T, p *Parser) {
 	for i, err := range p.Errors {
-		t.Errorf("[%2d] %s\n", i, err)
+		t.Errorf("[%d] %s\n", i, err)
 	}
 }
 
 func TestReturnStatements(t *testing.T) {
-	input := `
-return 12;
-return 17;
-return 30071;
-`
-
+	input := "return foo(bar, baz);"
 	l := lexer.New(input)
 	p := New(l)
 
 	program := p.ParseProgram()
-	// checkParserErrors(t, p)
+	checkParserErrors(t, p)
 
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
 	}
 
-	for _, stmt := range program.Statements {
-		returnStmt, ok := stmt.(*ast.ReturnStatement)
-		if !ok {
-			t.Errorf("stmt not *ast.returnStatement. got=%T", stmt)
-			continue
-		}
-		if returnStmt.String() != "return ;" {
-			t.Errorf("returnStmt.String not 'return', got %q", returnStmt.String())
-		}
+	stmt, ok := program.Statements[0].(*ast.ReturnStatement)
+	if !ok {
+		t.Fatalf("stmt not *ast.ReturnStatement. got=%T", stmt)
+	}
+	fcall, ok := stmt.ReturnValue.(*ast.FunctionCall)
+	if !ok {
+		t.Fatalf("stmt.ReturnValue not *ast.FunctionCall. got=%T", stmt.ReturnValue)
+	}
+	if fcall.Identifier.Value != "foo" {
+		t.Fatalf("function name not %q. got=%q", "foo", fcall.Identifier.Value)
 	}
 }
 

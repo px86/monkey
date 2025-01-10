@@ -142,12 +142,10 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 	p.nextToken()
-
-	// TODO: parse the expression
-	for !p.curTokenIs(token.SEMI_COLON) {
-		p.nextToken()
+	stmt.ReturnValue = p.parseExpression(PREC_LOWEST)
+	if !p.expectCurToken(token.SEMI_COLON) {
+		return nil
 	}
-
 	return stmt
 }
 
