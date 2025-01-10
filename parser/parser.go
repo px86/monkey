@@ -159,14 +159,59 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return stmt
 }
 
-func (p *Parser) parseIdentifier() ast.Expression {
-	s, ok := p.curToken.Value.(string)
+func (p *Parser) parseIntegerLiteral() *ast.IntegerLiteral {
+	value, ok := p.curToken.Value.(int)
 	if !ok {
 		p.Errors = append(p.Errors,
-			errors.New(fmt.Sprintf("identifier value is not string. got=%v", p.curToken.Value)))
+			errors.New(fmt.Sprintf("at line:%d, column:%d, %s value not of type %s. got=%T",
+				p.curToken.Line, p.curToken.Column,
+				token.TypeStr(p.curToken.Type), "int", p.curToken.Value)))
+		return nil
 	}
+	return &ast.IntegerLiteral{Token: p.curToken, Value: value}
+}
 
-	return &ast.Identifier{Token: p.curToken, Value: s}
+func (p *Parser) parseStringLiteral() *ast.StringLiteral {
+	value, ok := p.curToken.Value.(string)
+	if !ok {
+		p.Errors = append(p.Errors,
+			errors.New(fmt.Sprintf("at line:%d, column:%d, %s value not of type %s. got=%T",
+				p.curToken.Line, p.curToken.Column,
+				token.TypeStr(p.curToken.Type), "string", p.curToken.Value)))
+		return nil
+	}
+	return &ast.StringLiteral{Token: p.curToken, Value: value}
+}
+
+func (p *Parser) parseIdentifier() *ast.Identifier {
+	ident, ok := p.curToken.Value.(string)
+	if !ok {
+		p.Errors = append(p.Errors,
+			errors.New(fmt.Sprintf("at line:%d, column:%d, %s value not of type %s. got=%T",
+				p.curToken.Line, p.curToken.Column,
+				token.TypeStr(p.curToken.Type), "string", p.curToken.Value)))
+		return nil
+	}
+	return &ast.Identifier{Token: p.curToken, Value: ident}
+}
+
+func (p *Parser) parseFunctionCall() *ast.FunctionCall {
+	ident := p.parseIdentifier()
+	if ident == nil {
+		return nil
+	}
+	var fcall *ast.FunctionCall
+	if p.expectPeek(token.LEFT_PAREN) {
+		p.nextToken() // moves past (
+		fcall = &ast.FunctionCall{Identifier: ident}
+		for !p.curTokenIs(token.RIGHT_PAREN) {
+			fcall.Args = append(fcall.Args, p.parseExpression(PREC_LOWEST))
+			if p.curTokenIs(token.COMMA) {
+				p.nextToken()
+			}
+		}
+	}
+	return fcall
 }
 
 // See Jonathan Blow's video link above.
@@ -197,47 +242,19 @@ func (p *Parser) parseExpression(minPrec int) ast.Expression {
 }
 
 func (p *Parser) parseLeaf() ast.Expression {
-
 	var leaf ast.Expression
 
 	switch p.curToken.Type {
 	case token.INTEGER:
-		value, ok := p.curToken.Value.(int)
-		if !ok {
-			p.Errors = append(p.Errors, errors.New(
-				fmt.Sprintf("value of INTEGER is not int. got=%v", p.curToken.Value)))
-		}
-		leaf = &ast.IntegerLiteral{Token: p.curToken, Value: value}
+		leaf = p.parseIntegerLiteral()
 	case token.STRING_LITERAL:
-		value, ok := p.curToken.Value.(string)
-		if !ok {
-			p.Errors = append(p.Errors, errors.New(
-				fmt.Sprintf("value of STRING is not string. got=%v", p.curToken.Value)))
-		}
-		leaf = &ast.StringLiteral{Token: p.curToken, Value: value}
+		leaf = p.parseStringLiteral()
 	case token.IDENTIFIER:
-		value, ok := p.curToken.Value.(string)
-		if !ok {
-			p.Errors = append(p.Errors, errors.New(
-				fmt.Sprintf("value of IDENTIFIER is not string. got=%v", p.curToken.Value)))
-		}
-		ident := &ast.Identifier{Token: p.curToken, Value: value}
-		// Function call
 		if p.peekTokenIs(token.LEFT_PAREN) {
-			p.nextToken() // moves to (
-			p.nextToken() // moves past (
-			fcall := &ast.FunctionCall{Identifier: ident}
-			for !p.curTokenIs(token.RIGHT_PAREN) {
-				fcall.Args = append(fcall.Args, p.parseExpression(PREC_LOWEST))
-				if p.curTokenIs(token.COMMA) {
-					p.nextToken()
-				}
-			}
-			leaf = fcall
+			leaf = p.parseFunctionCall()
 		} else {
-			leaf = ident
+			leaf = p.parseIdentifier()
 		}
-
 	}
 
 	p.nextToken()
