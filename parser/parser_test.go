@@ -46,7 +46,7 @@ func TestLetStatements(t *testing.T) {
 
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
-	t.Errorf("%s", program.String())
+
 	if len(program.Statements) != 1 {
 		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
 	}
