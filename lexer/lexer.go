@@ -106,7 +106,9 @@ func (lex *Lexer) NextToken() token.Token {
 		case ch == ']':
 			tok.Type = token.RIGHT_BRACKET
 		case ch == '^':
-			tok.Type = token.XOR
+			tok.Type = token.CARET
+		case ch == '~':
+			tok.Type = token.TILDE
 		case ch == '=':
 			if lex.next() == '=' {
 				tok.Type = token.EQUAL_EQUAL
@@ -116,7 +118,7 @@ func (lex *Lexer) NextToken() token.Token {
 			}
 		case ch == '!':
 			if lex.next() == '=' {
-				tok.Type = token.NOT_EQUAL
+				tok.Type = token.EXCLAMATION_EQUAL
 			} else {
 				lex.retract()
 				tok.Type = token.EXCLAMATION
@@ -130,24 +132,24 @@ func (lex *Lexer) NextToken() token.Token {
 			}
 		case ch == '<':
 			if lex.next() == '=' {
-				tok.Type = token.LESS_THAN_EQUAL
+				tok.Type = token.LESSER_THAN_EQUAL
 			} else {
 				lex.retract()
-				tok.Type = token.LESS_THAN
+				tok.Type = token.LESSER_THAN
 			}
 		case ch == '&':
 			if lex.next() == '&' {
-				tok.Type = token.LOGICAL_AND
+				tok.Type = token.AMPERSAND_AMPERSAND
 			} else {
 				lex.retract()
-				tok.Type = token.BITWISE_AND
+				tok.Type = token.AMPERSAND
 			}
 		case ch == '|':
 			if lex.next() == '|' {
-				tok.Type = token.LOGICAL_OR
+				tok.Type = token.PIPE_PIPE
 			} else {
 				lex.retract()
-				tok.Type = token.BITWISE_OR
+				tok.Type = token.PIPE
 			}
 		// string literal
 		case ch == '"':
@@ -187,7 +189,7 @@ func (lex *Lexer) NextToken() token.Token {
 				}
 			}
 			if tok.Type != token.UNKNOWN {
-				tok.Type = token.STRING
+				tok.Type = token.STRING_LITERAL
 				tok.Value = string(chars)
 			}
 		// number
@@ -209,8 +211,8 @@ func (lex *Lexer) NextToken() token.Token {
 			lex.retract()
 			value := string(chars)
 			tok.Value = value
-			if token.KeywordsMap[value] != 0 {
-				tok.Type = token.KeywordsMap[value]
+			if kw, ok := token.IsKeyword(value); ok {
+				tok.Type = kw
 			} else {
 				tok.Type = token.IDENTIFIER
 			}

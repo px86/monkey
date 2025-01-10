@@ -35,6 +35,61 @@ func (p *Program) String() string {
 	return out.String()
 }
 
+type ExpressionStatement struct {
+	Token      token.Token // first token of expression
+	Expression Expression
+}
+
+func (es *ExpressionStatement) statementNode() {}
+
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String()
+	}
+	return ""
+}
+
+type IntegerLiteral struct {
+	Token token.Token
+	Value int
+}
+
+func (i *IntegerLiteral) String() string {
+	return strconv.Itoa(i.Value)
+}
+func (i *IntegerLiteral) expressionNode() {}
+
+type StringLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (s *StringLiteral) String() string {
+	return s.Value
+}
+func (s *StringLiteral) expressionNode() {}
+
+type PrefixExpr struct {
+	Operator   token.Token
+	Expression Expression
+}
+
+func (pe *PrefixExpr) String() string {
+	return token.TypeStr(pe.Operator.Type) + pe.Expression.String()
+}
+func (pe *PrefixExpr) expressionNode() {}
+
+type InfixExpr struct {
+	Left     Expression
+	Operator token.Token
+	Right    Expression
+}
+
+func (be *InfixExpr) String() string {
+	return be.Left.String() + " " + token.TypeStr(be.Operator.Type) + " " + be.Right.String()
+}
+func (be *InfixExpr) expressionNode() {}
+
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -74,6 +129,22 @@ func (i *Identifier) String() string {
 	return s
 }
 
+type FunctionCall struct {
+	Identifier *Identifier
+	Args       []Expression
+}
+
+func (fc *FunctionCall) expressionNode() {}
+
+func (fc *FunctionCall) String() string {
+	var buff bytes.Buffer
+	buff.WriteString(fc.Identifier.String() + "(")
+	for _, arg := range fc.Args {
+		buff.WriteString(arg.String())
+	}
+	return buff.String()
+}
+
 type ReturnStatement struct {
 	Token       token.Token
 	ReturnValue Expression
@@ -93,59 +164,3 @@ func (rs *ReturnStatement) String() string {
 	out.WriteString(";")
 	return out.String()
 }
-
-type ExpressionStatement struct {
-	Token      token.Token // first token of expression
-	Expression Expression
-}
-
-func (es *ExpressionStatement) statementNode() {}
-
-func (es *ExpressionStatement) String() string {
-	if es.Expression != nil {
-		return es.Expression.String()
-	}
-	return ""
-}
-
-type BinaryOperation struct {
-	Left     Expression
-	Operator token.Token
-	Right    Expression
-}
-
-func (bo *BinaryOperation) String() string {
-	return "(" + bo.Left.String() + " " + bo.Right.String() + ")"
-}
-func (bo *BinaryOperation) expressionNode() {}
-
-type Integer struct {
-	Token token.Token
-	Value int
-}
-
-func (i *Integer) String() string {
-	return strconv.Itoa(i.Value)
-}
-func (i *Integer) expressionNode() {}
-
-type Str struct {
-	Token token.Token
-	Value string
-}
-
-func (s *Str) String() string {
-	return s.Value
-}
-func (s *Str) expressionNode() {}
-
-type BinaryExpression struct {
-	Left     Expression
-	Operator token.Token
-	Right    Expression
-}
-
-func (be *BinaryExpression) String() string {
-	return be.Left.String() + " " + token.TypeStr(be.Operator.Type) + " " + be.Right.String()
-}
-func (be *BinaryExpression) expressionNode() {}

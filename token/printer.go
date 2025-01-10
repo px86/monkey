@@ -51,43 +51,43 @@ func TypeStr(toktype TokenType) string {
 		return "EQUAL_EQUAL"
 	case EXCLAMATION:
 		return "EXCLAMATION"
-	case NOT_EQUAL:
+	case EXCLAMATION_EQUAL:
 		return "NOT_EQUAL"
 	case GREATER_THAN:
 		return "GREATER_THAN"
 	case GREATER_THAN_EQUAL:
 		return "GREATER_THAN_EQUAL"
-	case LESS_THAN:
+	case LESSER_THAN:
 		return "LESS_THAN"
-	case LESS_THAN_EQUAL:
+	case LESSER_THAN_EQUAL:
 		return "LESS_THAN_EQUAL"
-	case BITWISE_AND:
+	case AMPERSAND:
 		return "BITWISE_AND"
-	case LOGICAL_AND:
+	case AMPERSAND_AMPERSAND:
 		return "LOGICAL_AND"
-	case BITWISE_OR:
+	case PIPE:
 		return "BITWISE_OR"
-	case LOGICAL_OR:
+	case PIPE_PIPE:
 		return "LOGICAL_OR"
-	case XOR:
+	case CARET:
 		return "XOR"
 	case INTEGER:
 		return "INTEGER"
 	case FLOAT:
 		return "FLOAT"
-	case STRING:
+	case STRING_LITERAL:
 		return "STRING"
 	case IDENTIFIER:
 		return "IDENTIFIER"
-	case LET:
+	case KW_LET:
 		return "LET"
-	case IF:
+	case KW_IF:
 		return "IF"
-	case ELSE:
+	case KW_ELSE:
 		return "ELSE"
-	case FUNCTION:
+	case KW_FUNCTION:
 		return "FUNCTION"
-	case RETURN:
+	case KW_RETURN:
 		return "RETURN"
 
 	default:

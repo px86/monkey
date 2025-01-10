@@ -20,39 +20,39 @@ let result = add(x, y);`
 		expectedType    token.TokenType
 		expectedLiteral any
 	}{
-		{token.LET, "let"},
+		{token.KW_LET, "let"},
 		{token.IDENTIFIER, "str"},
 		{token.EQUAL, nil},
-		{token.STRING, "This is a string."},
+		{token.STRING_LITERAL, "This is a string."},
 		{token.SEMI_COLON, nil},
-		{token.LET, "let"},
+		{token.KW_LET, "let"},
 		{token.IDENTIFIER, "x"},
 		{token.EQUAL, nil},
 		{token.INTEGER, 7},
 		{token.SEMI_COLON, nil},
-		{token.LET, "let"},
+		{token.KW_LET, "let"},
 		{token.IDENTIFIER, "y"},
 		{token.EQUAL, nil},
 		{token.INTEGER, 13},
 		{token.SEMI_COLON, nil},
-		{token.LET, "let"},
+		{token.KW_LET, "let"},
 		{token.IDENTIFIER, "add"},
 		{token.EQUAL, nil},
-		{token.FUNCTION, "fn"},
+		{token.KW_FUNCTION, "fn"},
 		{token.LEFT_PAREN, nil},
 		{token.IDENTIFIER, "a"},
 		{token.COMMA, nil},
 		{token.IDENTIFIER, "b"},
 		{token.RIGHT_PAREN, nil},
 		{token.LEFT_BRACE, nil},
-		{token.RETURN, "return"},
+		{token.KW_RETURN, "return"},
 		{token.IDENTIFIER, "a"},
 		{token.PLUS, nil},
 		{token.IDENTIFIER, "b"},
 		{token.SEMI_COLON, nil},
 		{token.RIGHT_BRACE, nil},
 		{token.SEMI_COLON, nil},
-		{token.LET, "let"},
+		{token.KW_LET, "let"},
 		{token.IDENTIFIER, "result"},
 		{token.EQUAL, nil},
 		{token.IDENTIFIER, "add"},
@@ -85,7 +85,7 @@ func TestStringLiterals(t *testing.T) {
 		expectedType    token.TokenType
 		expectedLiteral any
 	}{
-		{token.STRING, "This stiring has\nnewlines. And \t tabs."},
+		{token.STRING_LITERAL, "This stiring has\nnewlines. And \t tabs."},
 	}
 
 	l := New(input)
@@ -112,15 +112,15 @@ let foo = "bar";`
 		expectedLine    int
 		expectedColumn  int
 	}{
-		{token.LET, "let", 1, 0},
+		{token.KW_LET, "let", 1, 0},
 		{token.IDENTIFIER, "x", 1, 4},
 		{token.EQUAL, nil, 1, 6},
 		{token.INTEGER, 1, 1, 8},
 		{token.SEMI_COLON, nil, 1, 9},
-		{token.LET, "let", 2, 0},
+		{token.KW_LET, "let", 2, 0},
 		{token.IDENTIFIER, "foo", 2, 4},
 		{token.EQUAL, nil, 2, 8},
-		{token.STRING, "bar", 2, 10},
+		{token.STRING_LITERAL, "bar", 2, 10},
 		{token.SEMI_COLON, nil, 2, 15},
 	}
 
@@ -157,16 +157,16 @@ func TestOperators(t *testing.T) {
 		{token.EQUAL_EQUAL},
 		{token.EQUAL},
 		{token.EXCLAMATION},
-		{token.NOT_EQUAL},
+		{token.EXCLAMATION_EQUAL},
 		{token.GREATER_THAN},
 		{token.GREATER_THAN_EQUAL},
-		{token.LESS_THAN},
-		{token.LESS_THAN_EQUAL},
-		{token.BITWISE_AND},
-		{token.LOGICAL_AND},
-		{token.BITWISE_OR},
-		{token.LOGICAL_OR},
-		{token.XOR},
+		{token.LESSER_THAN},
+		{token.LESSER_THAN_EQUAL},
+		{token.AMPERSAND},
+		{token.AMPERSAND_AMPERSAND},
+		{token.PIPE},
+		{token.PIPE_PIPE},
+		{token.CARET},
 	}
 
 	l := New(input)

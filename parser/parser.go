@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-/*******************************************************************************
+/****************************************************************************************************************
 * Resources On Parsing
 *
 * Robert Nystrom's article titled: 'Pratt Parsers: Expression Parsing Made Easy'
@@ -19,7 +19,7 @@ import (
 * Jonathan Blow's video titled: 'Discussion with Casey Muratori about how easy precedence is...'
 *  https://www.youtube.com/watch?v=fIPO4G42wYE
 *
-********************************************************************************/
+****************************************************************************************************************/
 
 const (
 	_ int = iota
@@ -104,9 +104,9 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
-	case token.LET:
+	case token.KW_LET:
 		return p.parseLetStatement()
-	case token.RETURN:
+	case token.KW_RETURN:
 		return p.parseReturnStatement()
 	default:
 		return p.parseExpressionStatement()
@@ -173,17 +173,17 @@ func (p *Parser) parseIdentifier() ast.Expression {
 
 // See Jonathan Blow's video link above.
 func (p *Parser) parseIncreasingPrecedence(left ast.Expression, minPrec int) ast.Expression {
-	next := p.curToken
-	if !isBinaryOperator(next.Type) {
+	operator := p.curToken
+	if !isBinaryOperator(operator.Type) {
 		return left
 	}
-	nextPrec := precOf(next.Type)
+	nextPrec := precOf(operator.Type)
 	if nextPrec <= minPrec {
 		return left
 	}
 	p.nextToken()
 	right := p.parseExpression(nextPrec)
-	return &ast.BinaryExpression{left, next, right}
+	return &ast.InfixExpr{left, operator, right}
 }
 
 func (p *Parser) parseExpression(minPrec int) ast.Expression {
@@ -199,7 +199,9 @@ func (p *Parser) parseExpression(minPrec int) ast.Expression {
 }
 
 func (p *Parser) parseLeaf() ast.Expression {
+
 	var leaf ast.Expression
+
 	switch p.curToken.Type {
 	case token.INTEGER:
 		value, ok := p.curToken.Value.(int)
@@ -207,14 +209,37 @@ func (p *Parser) parseLeaf() ast.Expression {
 			p.Errors = append(p.Errors, errors.New(
 				fmt.Sprintf("value of INTEGER is not int. got=%v", p.curToken.Value)))
 		}
-		leaf = &ast.Integer{Token: p.curToken, Value: value}
-	case token.STRING:
+		leaf = &ast.IntegerLiteral{Token: p.curToken, Value: value}
+	case token.STRING_LITERAL:
 		value, ok := p.curToken.Value.(string)
 		if !ok {
 			p.Errors = append(p.Errors, errors.New(
 				fmt.Sprintf("value of STRING is not string. got=%v", p.curToken.Value)))
 		}
-		leaf = &ast.Str{Token: p.curToken, Value: value}
+		leaf = &ast.StringLiteral{Token: p.curToken, Value: value}
+	case token.IDENTIFIER:
+		value, ok := p.curToken.Value.(string)
+		if !ok {
+			p.Errors = append(p.Errors, errors.New(
+				fmt.Sprintf("value of IDENTIFIER is not string. got=%v", p.curToken.Value)))
+		}
+		ident := &ast.Identifier{Token: p.curToken, Value: value}
+		// Function call
+		if p.peekTokenIs(token.LEFT_PAREN) {
+			p.nextToken() // moves to (
+			p.nextToken() // moves past (
+			fcall := &ast.FunctionCall{Identifier: ident}
+			for !p.curTokenIs(token.RIGHT_PAREN) {
+				fcall.Args = append(fcall.Args, p.parseExpression(PREC_LOWEST))
+				if p.curTokenIs(token.COMMA) {
+					p.nextToken()
+				}
+			}
+			leaf = fcall
+		} else {
+			leaf = ident
+		}
+
 	}
 
 	p.nextToken()
@@ -232,15 +257,15 @@ func precOf(toktype token.TokenType) int {
 		prec = PREC_PRODUCT
 	case token.SLASH:
 		prec = PREC_PRODUCT
-	case token.LESS_THAN:
+	case token.LESSER_THAN:
 		prec = PREC_LESSGREATER
-	case token.LESS_THAN_EQUAL:
+	case token.LESSER_THAN_EQUAL:
 		prec = PREC_LESSGREATER
 	case token.GREATER_THAN:
 		prec = PREC_LESSGREATER
 	case token.GREATER_THAN_EQUAL:
 		prec = PREC_LESSGREATER
-	case token.FUNCTION:
+	case token.KW_FUNCTION:
 		prec = PREC_CALL
 	}
 	return prec
