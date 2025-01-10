@@ -8,7 +8,5 @@ let add = fn(x, y) {
 let result = add(five, ten);
 
 let main = fn() {
-  if 10 > 6 {
-    bar("Hello World!");
-  }
+    bar("foobar");
 };

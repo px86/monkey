@@ -90,6 +90,34 @@ func (be *InfixExpr) String() string {
 }
 func (be *InfixExpr) expressionNode() {}
 
+type FunctionExpr struct {
+	Token token.Token // fn
+	Args  []*Identifier
+	Body  []Statement
+}
+
+func (fe *FunctionExpr) String() string {
+	var buff bytes.Buffer
+	buff.WriteString("(" + token.TypeStr(fe.Token.Type) + " (")
+	for i, arg := range fe.Args {
+		buff.WriteString(arg.Value)
+		if i != len(fe.Args)-1 {
+			buff.WriteString(" ")
+		}
+	}
+	buff.WriteString(") ")
+	for i, stmt := range fe.Body {
+		buff.WriteString(stmt.String())
+		if i != len(fe.Body)-1 {
+			buff.WriteString(" ")
+		}
+	}
+
+	buff.WriteString(")")
+	return buff.String()
+}
+func (fe *FunctionExpr) expressionNode() {}
+
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier

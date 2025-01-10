@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/px86/monkey/lexer"
-	"github.com/px86/monkey/token"
+	"github.com/px86/monkey/parser"
 )
 
 func main() {
@@ -22,9 +22,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	for tok := lexer.NextToken(); tok.Type != token.EOF; tok = lexer.NextToken() {
-		token.PrintToken(tok)
-	}
+	parser := parser.New(lexer)
+	prog := parser.ParseProgram()
+
+	fmt.Println(prog.String())
 
 	fmt.Printf("\ntook %v\n", time.Since(start))
 }

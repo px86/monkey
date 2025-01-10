@@ -9,18 +9,6 @@ import (
 	"os"
 )
 
-/****************************************************************************************************************
-* Resources On Parsing
-*
-* Robert Nystrom's article titled: 'Pratt Parsers: Expression Parsing Made Easy'
-* https://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
-*
-*
-* Jonathan Blow's video titled: 'Discussion with Casey Muratori about how easy precedence is...'
-*  https://www.youtube.com/watch?v=fIPO4G42wYE
-*
-****************************************************************************************************************/
-
 const (
 	_ int = iota
 	PREC_LOWEST
@@ -32,31 +20,25 @@ const (
 	PREC_CALL
 )
 
-/*
-type (
-	prefixParseFn func() ast.Expression
-	infixParseFn  func(ast.Expression) ast.Expression
-)
-*/
+// NOTE TO MYSELF: it the responsibility of each terminal parse function to put the
+// parser.curToken to the very next token that should be read.
+// For example, if once parseLetStatement returns, the parser.curToken should point
+// at the token exactly after the semi colon.
 
 type Parser struct {
 	l      *lexer.Lexer
-	Errors []error // TODO: implement parse error reporting.
+	Errors []error
 
 	curToken  token.Token
-	peekToken token.Token
-
-	// TODO: implement the parsing yourself first. If it does not work, consult the interpreter book.
-	// prefixParseFns map[token.TokenType]prefixParseFn
-	// infixParseFns  map[token.TokenType]infixParseFn
+	nextToken token.Token
 }
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}
 
 	// Get two tokens from the lexer and populate peekToken and curToken.
-	p.nextToken()
-	p.nextToken()
+	p.advance()
+	p.advance()
 
 	// p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	// p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
@@ -65,24 +47,14 @@ func New(l *lexer.Lexer) *Parser {
 }
 
 // Moves peekToken to curToken, and fills peekToken with the next token from lexer.
-// If peekToken is EOF, the lexer is not called anymore. Further calls to p.nextToken
+// If peekToken is EOF, the lexer is not called anymore. Further calls to p.advance
 // will have no effect. It is up to the parsing logic to gracefully handle the EOF token.
-func (p *Parser) nextToken() {
-	p.curToken = p.peekToken
-	if p.peekToken.Type != token.EOF {
-		p.peekToken = p.l.NextToken()
+func (p *Parser) advance() {
+	p.curToken = p.nextToken
+	if p.nextToken.Type != token.EOF {
+		p.nextToken = p.l.NextToken()
 	}
 }
-
-/*
-func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
-	p.prefixParseFns[tokenType] = fn
-}
-
-func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
-	p.infixParseFns[tokenType] = fn
-}
-*/
 
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
@@ -92,7 +64,6 @@ func (p *Parser) ParseProgram() *ast.Program {
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
-		p.nextToken()
 	}
 	if len(p.Errors) > 0 {
 		for i, err := range p.Errors {
@@ -115,9 +86,10 @@ func (p *Parser) parseStatement() ast.Statement {
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.curToken}
-	if !p.expectPeek(token.IDENTIFIER) {
+	if !p.expectNextThenAdvance(token.IDENTIFIER) {
 		return nil
 	}
+
 	ident, ok := p.curToken.Value.(string)
 	if !ok {
 		p.Errors = append(p.Errors,
@@ -125,14 +97,14 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: ident}
 
-	if !p.expectPeek(token.EQUAL) {
+	if !p.expectNextThenAdvance(token.EQUAL) {
 		return nil
 	}
+	p.advance() // move past =
 
-	p.nextToken()
 	stmt.Value = p.parseExpression(PREC_LOWEST)
 
-	if !p.expectCurToken(token.SEMI_COLON) {
+	if !p.expectCurrentThenAdvance(token.SEMI_COLON) {
 		return nil
 	}
 
@@ -140,10 +112,10 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 }
 
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
-	stmt := &ast.ReturnStatement{Token: p.curToken}
-	p.nextToken()
+	stmt := &ast.ReturnStatement{Token: p.curToken} // return keyword
+	p.advance()
 	stmt.ReturnValue = p.parseExpression(PREC_LOWEST)
-	if !p.expectCurToken(token.SEMI_COLON) {
+	if !p.expectCurrentThenAdvance(token.SEMI_COLON) {
 		return nil
 	}
 	return stmt
@@ -153,8 +125,8 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 	stmt.Expression = p.parseExpression(PREC_LOWEST)
 
-	if p.peekTokenIs(token.SEMI_COLON) {
-		p.nextToken()
+	if p.curTokenIs(token.SEMI_COLON) {
+		p.advance()
 	}
 	return stmt
 }
@@ -168,7 +140,9 @@ func (p *Parser) parseIntegerLiteral() *ast.IntegerLiteral {
 				token.TypeStr(p.curToken.Type), "int", p.curToken.Value)))
 		return nil
 	}
-	return &ast.IntegerLiteral{Token: p.curToken, Value: value}
+	integer := &ast.IntegerLiteral{Token: p.curToken, Value: value}
+	p.advance()
+	return integer
 }
 
 func (p *Parser) parseStringLiteral() *ast.StringLiteral {
@@ -180,11 +154,13 @@ func (p *Parser) parseStringLiteral() *ast.StringLiteral {
 				token.TypeStr(p.curToken.Type), "string", p.curToken.Value)))
 		return nil
 	}
-	return &ast.StringLiteral{Token: p.curToken, Value: value}
+	s := &ast.StringLiteral{Token: p.curToken, Value: value}
+	p.advance()
+	return s
 }
 
 func (p *Parser) parseIdentifier() *ast.Identifier {
-	ident, ok := p.curToken.Value.(string)
+	id, ok := p.curToken.Value.(string)
 	if !ok {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, %s value not of type %s. got=%T",
@@ -192,7 +168,46 @@ func (p *Parser) parseIdentifier() *ast.Identifier {
 				token.TypeStr(p.curToken.Type), "string", p.curToken.Value)))
 		return nil
 	}
-	return &ast.Identifier{Token: p.curToken, Value: ident}
+	identifier := &ast.Identifier{Token: p.curToken, Value: id}
+	p.advance()
+	return identifier
+}
+
+func (p *Parser) parseFunctionExpression() *ast.FunctionExpr {
+	fexpr := &ast.FunctionExpr{Token: p.curToken} // fn keyword
+	p.advance()
+	if !p.expectCurrentThenAdvance(token.LEFT_PAREN) {
+		return nil
+	}
+	// args
+	for !p.curTokenIs(token.RIGHT_PAREN) && !p.curTokenIs(token.EOF) {
+		fexpr.Args = append(fexpr.Args, p.parseIdentifier())
+		if p.curTokenIs(token.COMMA) {
+			p.advance()
+		}
+	}
+
+	if !p.expectCurrentThenAdvance(token.RIGHT_PAREN) {
+		return nil
+	}
+
+	if !p.expectCurrentThenAdvance(token.LEFT_BRACE) {
+		return nil
+	}
+	// body
+
+	for !p.curTokenIs(token.RIGHT_BRACE) && !p.curTokenIs(token.EOF) {
+		fexpr.Body = append(fexpr.Body, p.parseStatement())
+		// if p.curTokenIs(token.SEMI_COLON) {
+		// 	p.advance()
+		// }
+	}
+
+	if !p.expectCurrentThenAdvance(token.RIGHT_BRACE) {
+		return nil
+	}
+
+	return fexpr
 }
 
 func (p *Parser) parseFunctionCall() *ast.FunctionCall {
@@ -201,15 +216,15 @@ func (p *Parser) parseFunctionCall() *ast.FunctionCall {
 		return nil
 	}
 	var fcall *ast.FunctionCall
-	if p.expectPeek(token.LEFT_PAREN) {
-		p.nextToken() // moves past (
+	if p.expectCurrentThenAdvance(token.LEFT_PAREN) {
 		fcall = &ast.FunctionCall{Name: ident}
 		for !p.curTokenIs(token.RIGHT_PAREN) {
 			fcall.Args = append(fcall.Args, p.parseExpression(PREC_LOWEST))
 			if p.curTokenIs(token.COMMA) {
-				p.nextToken()
+				p.advance()
 			}
 		}
+		p.advance()
 	}
 	return fcall
 }
@@ -224,7 +239,7 @@ func (p *Parser) parseIncreasingPrecedence(left ast.Expression, minPrec int) ast
 	if nextPrec <= minPrec {
 		return left
 	}
-	p.nextToken()
+	p.advance()
 	right := p.parseExpression(nextPrec)
 	return &ast.InfixExpr{left, operator, right}
 }
@@ -249,15 +264,17 @@ func (p *Parser) parseLeaf() ast.Expression {
 		leaf = p.parseIntegerLiteral()
 	case token.STRING_LITERAL:
 		leaf = p.parseStringLiteral()
+	case token.KW_FUNCTION:
+		leaf = p.parseFunctionExpression()
 	case token.IDENTIFIER:
-		if p.peekTokenIs(token.LEFT_PAREN) {
+		if p.nextTokenIs(token.LEFT_PAREN) {
 			leaf = p.parseFunctionCall()
 		} else {
 			leaf = p.parseIdentifier()
 		}
 	}
 
-	p.nextToken()
+	// p.advance()
 	return leaf
 }
 
@@ -290,38 +307,32 @@ func (p *Parser) curTokenIs(t token.TokenType) bool {
 	return p.curToken.Type == t
 }
 
-func (p *Parser) peekTokenIs(t token.TokenType) bool {
-	return p.peekToken.Type == t
+func (p *Parser) nextTokenIs(t token.TokenType) bool {
+	return p.nextToken.Type == t
 }
 
-// Match the expected token with peekToken.
-// If matched, call p.nextToken().
-// Else, report an error and return false.
-func (p *Parser) expectPeek(t token.TokenType) bool {
-	if p.peekToken.Type == t {
-		p.nextToken()
+func (p *Parser) expectNextThenAdvance(t token.TokenType) bool {
+	if p.nextToken.Type == t {
+		p.advance()
 		return true
 	} else {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, expected %s, got=%s",
-				p.peekToken.Line, p.peekToken.Column,
-				token.TypeStr(t), token.TypeStr(p.peekToken.Type))))
+				p.nextToken.Line, p.nextToken.Column,
+				token.TypeStr(t), token.TypeStr(p.nextToken.Type))))
 		return false
 	}
 }
 
-// Match the expected token with curToken.
-// If matched, call p.nextToken().
-// Else, report an error and return false.
-func (p *Parser) expectCurToken(t token.TokenType) bool {
+func (p *Parser) expectCurrentThenAdvance(t token.TokenType) bool {
 	if p.curToken.Type == t {
-		p.nextToken()
+		p.advance()
 		return true
 	} else {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, expected %s, got=%s",
-				p.peekToken.Line, p.peekToken.Column,
-				token.TypeStr(t), token.TypeStr(p.peekToken.Type))))
+				p.nextToken.Line, p.nextToken.Column,
+				token.TypeStr(t), token.TypeStr(p.nextToken.Type))))
 		return false
 	}
 }
