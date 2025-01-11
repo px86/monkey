@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
+	// "time"
 
 	"github.com/px86/monkey/lexer"
 	"github.com/px86/monkey/parser"
@@ -16,7 +16,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: %s FILE...\n", exe)
 		os.Exit(1)
 	}
-	start := time.Now()
+	// start := time.Now()
 
 	lexer, err := lexer.FromFilePath(os.Args[1])
 	if err != nil {
@@ -27,5 +27,5 @@ func main() {
 
 	fmt.Println(prog.String())
 
-	fmt.Printf("\ntook %v\n", time.Since(start))
+	// fmt.Printf("\ntook %v\n", time.Since(start))
 }

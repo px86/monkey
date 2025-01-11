@@ -28,8 +28,11 @@ type Program struct {
 func (p *Program) String() string {
 	var out bytes.Buffer
 	out.WriteString("(prog ")
-	for _, s := range p.Statements {
+	for i, s := range p.Statements {
 		out.WriteString(s.String())
+		if i != len(p.Statements)-1 {
+			out.WriteString(" ")
+		}
 	}
 	out.WriteString(")")
 	return out.String()
@@ -75,7 +78,7 @@ type PrefixExpr struct {
 }
 
 func (pe *PrefixExpr) String() string {
-	return token.AsString(pe.Operator.Type) + pe.Expression.String()
+	return fmt.Sprintf("(%s %s)", token.AsString(pe.Operator.Type), pe.Expression.String())
 }
 func (pe *PrefixExpr) expressionNode() {}
 
