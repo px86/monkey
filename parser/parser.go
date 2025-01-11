@@ -229,29 +229,17 @@ func (p *Parser) parseFunctionCall() *ast.FunctionCall {
 	return fcall
 }
 
-// See Jonathan Blow's video link above.
-func (p *Parser) parseIncreasingPrecedence(left ast.Expression, minPrec int) ast.Expression {
-	operator := p.curToken
-	if !isBinaryOperator(operator.Type) {
-		return left
-	}
-	nextPrec := precOf(operator.Type)
-	if nextPrec <= minPrec {
-		return left
-	}
-	p.advance()
-	right := p.parseExpression(nextPrec)
-	return &ast.InfixExpr{left, operator, right}
-}
-
-func (p *Parser) parseExpression(minPrec int) ast.Expression {
+func (p *Parser) parseExpression(basePrecedence int) ast.Expression {
 	left := p.parseLeaf()
 	for {
-		node := p.parseIncreasingPrecedence(left, minPrec)
-		if left == node {
+		tok := p.curToken
+		prec := precOf(tok.Type)
+		if !isBinaryOperator(tok.Type) || prec <= basePrecedence {
 			break
 		}
-		left = node
+		p.advance()
+		right := p.parseExpression(prec)
+		left = &ast.InfixExpr{Left: left, Operator: tok, Right: right}
 	}
 	return left
 }
@@ -290,7 +278,6 @@ func (p *Parser) parseLeaf() ast.Expression {
 		p.expectCurrentThenAdvance(token.RIGHT_PAREN)
 	}
 
-	// p.advance()
 	return leaf
 }
 
