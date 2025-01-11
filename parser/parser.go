@@ -272,6 +272,22 @@ func (p *Parser) parseLeaf() ast.Expression {
 		} else {
 			leaf = p.parseIdentifier()
 		}
+	case token.MINUS:
+		t := &ast.PrefixExpr{Operator: p.curToken}
+		p.advance()
+		t.Expression = p.parseExpression(PREC_LOWEST)
+		leaf = t
+
+	case token.EXCLAMATION:
+		t := &ast.PrefixExpr{Operator: p.curToken}
+		p.advance()
+		t.Expression = p.parseExpression(PREC_LOWEST)
+		leaf = t
+
+	case token.LEFT_PAREN:
+		p.advance() // move past the (
+		leaf = p.parseExpression(PREC_LOWEST)
+		p.expectCurrentThenAdvance(token.RIGHT_PAREN)
 	}
 
 	// p.advance()
