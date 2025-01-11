@@ -52,6 +52,19 @@ func (es *ExpressionStatement) String() string {
 	return ""
 }
 
+type Boolean struct {
+	Token token.Token
+	Value bool
+}
+
+func (b *Boolean) String() string {
+	if b.Value {
+		return "true"
+	}
+	return "false"
+}
+func (b *Boolean) expressionNode() {}
+
 type IntegerLiteral struct {
 	Token token.Token
 	Value int

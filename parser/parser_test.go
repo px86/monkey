@@ -38,6 +38,31 @@ func TestReturnStatements(t *testing.T) {
 	}
 }
 
+func TestBoolean(t *testing.T) {
+	input := "true;"
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt not *ast.ExpressionStatement. got=%T", stmt)
+	}
+	boolean, ok := stmt.Expression.(*ast.Boolean)
+	if !ok {
+		t.Fatalf("stmt.ReturnValue not *ast.Boolean. got=%T", stmt.Expression)
+	}
+	if boolean.Value != true {
+		t.Fatalf("boolean value not %v. got=%v", true, boolean.Value)
+	}
+}
+
 func TestLetStatements(t *testing.T) {
 
 	input := []struct {

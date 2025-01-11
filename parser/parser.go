@@ -276,6 +276,14 @@ func (p *Parser) parseLeaf() ast.Expression {
 		p.advance() // move past the (
 		leaf = p.parseExpression(PREC_LOWEST)
 		p.expectCurrentThenAdvance(token.RIGHT_PAREN)
+
+	case token.KW_TRUE:
+		leaf = &ast.Boolean{Token: p.curToken, Value: true}
+		p.advance()
+
+	case token.KW_FALSE:
+		leaf = &ast.Boolean{Token: p.curToken, Value: false}
+		p.advance()
 	}
 
 	return leaf
