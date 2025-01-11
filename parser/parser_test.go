@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"github.com/px86/monkey/ast"
 	"github.com/px86/monkey/lexer"
-	"github.com/px86/monkey/token"
 	"testing"
 )
 
@@ -40,127 +39,115 @@ func TestReturnStatements(t *testing.T) {
 }
 
 func TestLetStatements(t *testing.T) {
-	input := "let foo = bar(\"spam\", 10+20*30-5);"
-	l := lexer.New(input)
-	p := New(l)
 
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+	input := []struct {
+		stmt string
+		tree string
+	}{
+		{"let a = 1;", "(let a 1)"},
+		{"let b = foo(x, y);", "(let b (foo x y))"},
 	}
 
-	stmt, ok := program.Statements[0].(*ast.LetStatement)
-	if !ok {
-		t.Fatalf("stmt not *ast.LetStatement. got=%T", stmt)
-	}
-}
+	for i, testcase := range input {
 
-func TestIdentifierExpression(t *testing.T) {
-	input := "foobar;"
+		p := New(lexer.New(testcase.stmt))
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
 
-	l := lexer.New(input)
-	p := New(l)
+		if len(program.Statements) != 1 {
+			t.Errorf("[TC %d] program does not contain 1 statement. got=%d",
+				i, len(program.Statements))
+		}
 
-	program := p.ParseProgram()
-	// checkParserErrors(t, p)
+		lstmt, ok := program.Statements[0].(*ast.LetStatement)
+		if !ok {
+			t.Errorf("[TC %d] stmt not *ast.LetStatement. got=%T", i, program.Statements[0])
+		}
 
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
-	}
-
-	expStmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("statement not *ast.ExpressionStatement. got=%T", expStmt)
-	}
-
-	ident, ok := expStmt.Expression.(*ast.Identifier)
-	if !ok {
-		t.Fatalf("exp not *ast.Identifier. got=%T", expStmt.Expression)
-	}
-
-	if ident.Value != "foobar" {
-		t.Errorf("ident.Value not %s. got=%s", "foobar", ident.Value)
-	}
-
-	if ident.String() != "foobar" {
-		t.Errorf("ident.String not %s. got=%s", "foobar", ident.String())
+		if lstmt.String() != testcase.tree {
+			t.Errorf("[TC %d] AST string didn't match. expected=%q, got=%q",
+				i, testcase.tree, lstmt.String())
+		}
 	}
 }
 
-func TestIntegerExpression(t *testing.T) {
-	input := "10 + 30;"
+func TestPrefixExpressions(t *testing.T) {
 
-	l := lexer.New(input)
-	p := New(l)
-
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+	input := []struct {
+		expr string
+		tree string
+	}{
+		{"-1;", "(- 1)"},
+		{"-foo(x, y);", "(- (foo x y))"},
+		{"!foo;", "(! foo)"},
 	}
 
-	expStmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("statement not *ast.ExpressionStatement. got=%T", expStmt)
-	}
+	for i, testcase := range input {
 
-	be, ok := expStmt.Expression.(*ast.InfixExpr)
-	if !ok {
-		t.Fatalf("exp not *ast.BinaryExpression. got=%T", expStmt.Expression)
-	}
+		p := New(lexer.New(testcase.expr))
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
 
-	if be.Left == nil {
-		t.Fatalf("be.Left is nil")
-	}
+		if len(program.Statements) != 1 {
+			t.Errorf("[TC %d] program does not contain 1 statement. got=%d",
+				i, len(program.Statements))
+		}
 
-	if be.Right == nil {
-		t.Fatalf("be.Left is nil")
-	}
+		estmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Errorf("[TC %d] statement not *ast.ExpressionStatement. got=%T", i, estmt)
+		}
 
-	if be.String() != "(+ 10 30)" {
-		t.Fatalf("String() not %q. got=%v", "(+ 10 30)", be.String())
+		prefix, ok := estmt.Expression.(*ast.PrefixExpr)
+		if !ok {
+			t.Errorf("[TC %d] expr not *ast.PrefixExpr. got=%T", i, estmt.Expression)
+		}
+		if prefix.String() != testcase.tree {
+			t.Errorf("[TC %d] AST string didn't match. expected=%q, got=%q",
+				i, testcase.tree, prefix.String())
+		}
 	}
 }
 
-func TestBinaryExpression(t *testing.T) {
-	input := "1 + 2 * 3 + 4;"
-	/*
-	        +
-	       / \
-	      +   4
-	     / \
-	   1   *
-	      / \
-	     2   3
-	*/
+func TestBinaryExpressions(t *testing.T) {
 
-	l := lexer.New(input)
-	p := New(l)
-
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+	input := []struct {
+		expr string
+		tree string
+	}{
+		{"1 + 2;", "(+ 1 2)"},
+		{"1 * 2 + 3;", "(+ (* 1 2) 3)"},
+		{"1 + 2 * 3 + 4;", "(+ (+ 1 (* 2 3)) 4)"},
+		{"1 + 2 * 3 + 4/2 - 1;", "(- (+ (+ 1 (* 2 3)) (/ 4 2)) 1)"},
+		{"bar() * foo + 3;", "(+ (* (bar) foo) 3)"},
+		{"2 * (3 + 4);", "(* 2 (+ 3 4))"},
 	}
 
-	expStmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("statement not *ast.ExpressionStatement. got=%T", expStmt)
-	}
+	for i, testcase := range input {
 
-	be, ok := expStmt.Expression.(*ast.InfixExpr)
-	if !ok {
-		t.Fatalf("exp not *ast.BinaryExpression. got=%T", expStmt.Expression)
-	}
+		p := New(lexer.New(testcase.expr))
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
 
-	if be.Operator.Type != token.PLUS {
-		t.Fatalf("top operator not PLUS. got=%v\n.String()=%q", token.AsString(be.Operator.Type), be.String())
-	}
+		if len(program.Statements) != 1 {
+			t.Errorf("[TC %d] program does not contain 1 statement. got=%d",
+				i, len(program.Statements))
+		}
 
+		estmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Errorf("[TC %d] statement not *ast.ExpressionStatement. got=%T", i, estmt)
+		}
+
+		infix, ok := estmt.Expression.(*ast.InfixExpr)
+		if !ok {
+			t.Errorf("[TC %d] expr not *ast.InfixExpr. got=%T", i, estmt.Expression)
+		}
+		if infix.String() != testcase.tree {
+			t.Errorf("[TC %d] AST string didn't match. expected=%q, got=%q",
+				i, testcase.tree, infix.String())
+		}
+	}
 }
 
 func TestFunctionCall(t *testing.T) {
