@@ -230,3 +230,28 @@ func TestFunctionCall(t *testing.T) {
 	}
 
 }
+
+func TestIfExpression(t *testing.T) {
+	input := "if (x < y) { y - x } else { x - y }"
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt not *ast.ExpressionStatement. got=%T", stmt)
+	}
+	ifexpr, ok := stmt.Expression.(*ast.IfExpression)
+	if !ok {
+		t.Fatalf("stmt.ReturnValue not *ast.IfExpression. got=%T", stmt.Expression)
+	}
+	if ifexpr.Condition.String() != "(< x y)" {
+		t.Fatalf("condition ast not %v. got=%v", "(< x y)", ifexpr.Condition.String())
+	}
+}

@@ -52,6 +52,43 @@ func (es *ExpressionStatement) String() string {
 	return ""
 }
 
+type BlockStatement struct {
+	Token      token.Token // of type token.LEFT_BRACE
+	Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode() {}
+
+func (bs *BlockStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString("(block ")
+	for i, s := range bs.Statements {
+		out.WriteString(s.String())
+		if i != len(bs.Statements)-1 {
+			out.WriteString(" ")
+		}
+	}
+	out.WriteString(")")
+	return out.String()
+}
+
+type IfExpression struct {
+	Token     token.Token
+	Condition Expression
+	ThenBlock *BlockStatement
+	ElseBlock *BlockStatement
+}
+
+func (ie *IfExpression) expressionNode() {}
+func (ie *IfExpression) String() string {
+	if ie.ElseBlock != nil {
+		return fmt.Sprintf("(%s %s %s %s)", token.AsString(ie.Token.Type),
+			ie.Condition.String(), ie.ThenBlock.String(), ie.ElseBlock.String())
+	}
+	return fmt.Sprintf("(%s %s %s)", token.AsString(ie.Token.Type),
+		ie.Condition.String(), ie.ThenBlock.String())
+}
+
 type Boolean struct {
 	Token token.Token
 	Value bool

@@ -254,6 +254,8 @@ func (p *Parser) parseLeaf() ast.Expression {
 		leaf = p.parseStringLiteral()
 	case token.KW_FUNCTION:
 		leaf = p.parseFunctionExpression()
+	case token.KW_IF:
+		leaf = p.parseIfExpression()
 	case token.IDENTIFIER:
 		if p.nextTokenIs(token.LEFT_PAREN) {
 			leaf = p.parseFunctionCall()
@@ -358,7 +360,51 @@ func isBinaryOperator(toktype token.TokenType) bool {
 		return true
 	case token.SLASH:
 		return true
+	case token.LESSER_THAN:
+		return true
+	case token.LESSER_THAN_EQUAL:
+		return true
+	case token.GREATER_THAN:
+		return true
+	case token.GREATER_THAN_EQUAL:
+		return true
+	case token.EQUAL:
+		return true
+	case token.EQUAL_EQUAL:
+		return true
+	case token.AMPERSAND:
+		return true
+	case token.AMPERSAND_AMPERSAND:
+		return true
+	case token.PIPE:
+		return true
+	case token.PIPE_PIPE:
+		return true
 	default:
 		return false
 	}
+}
+
+func (p *Parser) parseIfExpression() *ast.IfExpression {
+	ifexpr := &ast.IfExpression{Token: p.curToken}
+	p.advance()
+	p.expectCurrentThenAdvance(token.LEFT_PAREN)
+	ifexpr.Condition = p.parseExpression(PREC_LOWEST)
+	p.expectCurrentThenAdvance(token.RIGHT_PAREN)
+	ifexpr.ThenBlock = p.parseBlockStatement()
+	if p.curTokenIs(token.KW_ELSE) {
+		p.advance()
+		ifexpr.ElseBlock = p.parseBlockStatement()
+	}
+	return ifexpr
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	bstmt := &ast.BlockStatement{Token: p.curToken} // {
+	p.advance()
+	for !(p.curTokenIs(token.RIGHT_BRACE) || p.curTokenIs(token.EOF)) {
+		bstmt.Statements = append(bstmt.Statements, p.parseStatement())
+	}
+	p.expectCurrentThenAdvance(token.RIGHT_BRACE)
+	return bstmt
 }
