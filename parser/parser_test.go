@@ -175,6 +175,33 @@ func TestBinaryExpressions(t *testing.T) {
 	}
 }
 
+func TestFunctionExpr(t *testing.T) {
+	input := "fn(x, y) { let z = x + y; return z; }"
+
+	p := New(lexer.New(input))
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("program does not contain 1 statement. got=%d",
+			len(program.Statements))
+	}
+	estmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("statement not *ast.ExpressionStatement. got=%T", estmt)
+	}
+
+	fexpr, ok := estmt.Expression.(*ast.FunctionExpr)
+	if !ok {
+		t.Errorf("expr not *ast.FunctionExpr. got=%T", estmt.Expression)
+	}
+	if fexpr.String() != "(fn (x y) (block (let z (+ x y)) (return z)))" {
+		t.Errorf("AST string didn't match. expected=%q, got=%q",
+			"(fn (x y) (block (let z (+ x y)) (return z)))", fexpr.String())
+	}
+
+}
+
 func TestFunctionCall(t *testing.T) {
 
 	cases := []struct {

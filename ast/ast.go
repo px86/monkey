@@ -146,7 +146,7 @@ func (be *InfixExpr) expressionNode() {}
 type FunctionExpr struct {
 	Token token.Token // fn
 	Args  []*Identifier
-	Body  []Statement
+	Body  *BlockStatement
 }
 
 func (fe *FunctionExpr) String() string {
@@ -159,13 +159,7 @@ func (fe *FunctionExpr) String() string {
 		}
 	}
 	buff.WriteString(") ")
-	for i, stmt := range fe.Body {
-		buff.WriteString(stmt.String())
-		if i != len(fe.Body)-1 {
-			buff.WriteString(" ")
-		}
-	}
-
+	buff.WriteString(fe.Body.String())
 	buff.WriteString(")")
 	return buff.String()
 }

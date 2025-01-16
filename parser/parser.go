@@ -191,21 +191,7 @@ func (p *Parser) parseFunctionExpression() *ast.FunctionExpr {
 		return nil
 	}
 
-	if !p.expectCurrentThenAdvance(token.LEFT_BRACE) {
-		return nil
-	}
-	// body
-
-	for !p.curTokenIs(token.RIGHT_BRACE) && !p.curTokenIs(token.EOF) {
-		fexpr.Body = append(fexpr.Body, p.parseStatement())
-		// if p.curTokenIs(token.SEMI_COLON) {
-		// 	p.advance()
-		// }
-	}
-
-	if !p.expectCurrentThenAdvance(token.RIGHT_BRACE) {
-		return nil
-	}
+	fexpr.Body = p.parseBlockStatement()
 
 	return fexpr
 }
