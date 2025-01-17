@@ -132,7 +132,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseIntegerLiteral() *ast.IntegerLiteral {
-	value, ok := p.curToken.Value.(int)
+	value, ok := p.curToken.Value.(int64)
 	if !ok {
 		p.Errors = append(p.Errors,
 			errors.New(fmt.Sprintf("at line:%d, column:%d, %s value not of type %s. got=%T",

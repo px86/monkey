@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/px86/monkey/token"
-	"strconv"
 )
 
 type Node interface {
@@ -104,11 +103,11 @@ func (b *Boolean) expressionNode() {}
 
 type IntegerLiteral struct {
 	Token token.Token
-	Value int
+	Value int64
 }
 
 func (i *IntegerLiteral) String() string {
-	return strconv.Itoa(i.Value)
+	return fmt.Sprintf("%d", i.Value)
 }
 func (i *IntegerLiteral) expressionNode() {}
 
