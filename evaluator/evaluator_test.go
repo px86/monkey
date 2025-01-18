@@ -1,7 +1,6 @@
 package evaluator
 
 import (
-	"github.com/px86/monkey/ast"
 	"github.com/px86/monkey/lexer"
 	"github.com/px86/monkey/object"
 	"github.com/px86/monkey/parser"
@@ -27,8 +26,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 func testEval(src string) object.Object {
 	p := parser.New(lexer.New(src))
 	prog := p.ParseProgram()
-	estmt, _ := prog.Statements[0].(*ast.ExpressionStatement)
-	return Eval(estmt.Expression)
+	return Eval(prog)
 }
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
